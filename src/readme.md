@@ -5,8 +5,10 @@ An ergonomic Deno wrapper around the CLI tool [packwiz](https://packwiz.infra.li
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-  - [Packwiz Install Helper](#packwiz-install-helper)
   - [Project Initialization](#project-initialization)
+- [Scripts](#scripts)
+  - [Install Packwiz Executable](#install-packwiz-executable)
+  - [Development and Playtesting with MultiMC](#development-and-playtesting-with-multimc)
 - [Type Definitions](#type-definitions)
 - [Project Scope](#project-scope)
 
@@ -25,21 +27,7 @@ await pack.update("quark"); // updates mods/quark.pw.toml
 await pack.remove("quark"); // removes mods/quark.pw.toml
 ```
 
-See the [API docs](https://deno.land/x/packwiz/mod.ts) for more information.
-
-### Packwiz Install Helper
-
-To download the latest version of `packwiz`, run this in your project directory:
-
-```sh
-deno run -A https://deno.land/x/packwiz/install.ts
-```
-
-You can also provide a directory path as an argument to install elsewhere:
-
-```sh
-deno run -A https://deno.land/x/packwiz/install.ts /path/to/directory
-```
+See the [API docs](https://deno.land/x/packwiz@0.1.0/mod.ts) for more information.
 
 ### Project Initialization
 
@@ -49,10 +37,10 @@ Generally you will want to initialize a new project with `packwiz` CLI, which gu
 packwiz init
 ```
 
-This library also provides a standalone function to do the same thing programmatically:
+This library also provides a standalone function to use the CLI programmatically:
 
 ```ts
-import { initialize } from "https://deno.land/x/packwiz/mod.ts";
+import { initialize } from "https://deno.land/x/packwiz@0.1.0/mod.ts";
 
 initialize({
   author: "me",
@@ -64,44 +52,76 @@ initialize({
 });
 ```
 
+## Scripts
+
+### Install Packwiz Executable
+
+To download the latest version of `packwiz`, run this in your project directory:
+
+```sh
+deno run -A https://deno.land/x/packwiz@0.1.0/install.ts
+```
+
+You can also provide a directory path install elsewhere:
+
+```sh
+deno run -A https://deno.land/x/packwiz@0.1.0/install.ts /path/to/directory
+```
+
+### Development and Playtesting with MultiMC
+
+Packwiz provides a unique method of playtesting modpacks by creating a MultiMC instance that is automatically updated with the latest version of your modpack, allowing you to test your modpack without having to manually update it every time you make a change.
+
+A script is provided to streamline and walk you through the process. In your project directory, run:
+
+```sh
+deno run -A https://deno.land/x/packwiz@0.1.0/dev.ts
+```
+
+You can also provide a path to a packwiz project as an argument:
+
+```sh
+deno run -A https://deno.land/x/packwiz@0.1.0/dev.ts /path/to/packwiz/project
+```
+
 ## Type Definitions
 
 ```ts
-import type { ModFile } from "https://deno.land/x/packwiz@0.1.0/mod.ts";
+import type { MetaFile } from "https://deno.land/x/packwiz@0.1.0/mod.ts";
 ```
 
-Types are also re-exported under the `Packwiz` namespace, which is merged with the main `Packwiz` class. This allows you to keep your imports very clean, and in more complex files it contextualizes type names for ease of comprehension.
+Types are also re-exported under the `Pack` namespace, which is merged with the main `Pack` class. This allows you to keep your imports very clean, and in more complex files it contextualizes type names for ease of comprehension.
 
 ```ts
 import { Pack } from "https://deno.land/x/packwiz@0.1.0/mod.ts";
 
 const pack = new Pack("path/to/pack");
 
-function curseForgeFiles(): Pack.ModFile[] {
-  return (await pack.modFiles())
-    .filter((file) => file.download === "metadata:curseforge");
-}
+const curseForgeMods = Object.values(pack.mods)
+  .filter((file): file is Pack.CurseForgeMetaFile =>
+    "curseforge" in file.update
+  );
 ```
 
 ## Project Scope
 
 Given `const pack = new Pack()` for brevity:
 
-| CLI Command                 | Deno API                                  |
-| --------------------------- | ----------------------------------------- |
-| `packwiz completion`        | Not supported                             |
-| `packwiz curseforge add`    | `pack.add("curseforge", options)`         |
-| `packwiz curseforge detect` | `pack.detect(slug)`                       |
-| `packwiz curseforge export` | `pack.export("curseforge", options)`      |
-| `packwiz curseforge import` | `pack.importModpack`                      |
-| `packwiz curseforge open`   | Not supported                             |
-| `packwiz init`              | Standalone function `initialize(options)` |
-| `packwiz list`              | Use `pack.files` for this info and more   |
-| `packwiz modrinth add`      | `pack.add("modrinth", options)`           |
-| `packwiz modrinth export`   | `pack.export("modrinth", options)`        |
-| `packwiz refresh`           | `pack.refresh()`                          |
-| `packwiz remove`            | `pack.remove(slug)`                       |
-| `packwiz serve`             | Planned                                   |
-| `packwiz update`            | `pack.update(slug)`                       |
-| `packwiz url add`           | `pack.add("external", options)`           |
-| `packwiz utils`             | Not supported                             |
+| CLI Command                 | Deno API                                   |
+| --------------------------- | ------------------------------------------ |
+| `packwiz completion`        | Not supported directly                     |
+| `packwiz curseforge add`    | `pack.add("curseforge", slug, options)`    |
+| `packwiz curseforge detect` | `pack.detect()`                            |
+| `packwiz curseforge export` | `pack.export("curseforge", options)`       |
+| `packwiz curseforge import` | `pack.importModpack()`                     |
+| `packwiz curseforge open`   | Not supported directly                     |
+| `packwiz init`              | Standalone function `initialize(options)`  |
+| `packwiz list`              | Use `pack.metaFiles` and `pack.otherFiles` |
+| `packwiz modrinth add`      | `pack.add("modrinth", slug, options)`      |
+| `packwiz modrinth export`   | `pack.export("modrinth", options)`         |
+| `packwiz refresh`           | `pack.refresh()`                           |
+| `packwiz remove`            | `pack.remove(slug)`                        |
+| `packwiz serve`             | Part of the `dev` script                   |
+| `packwiz update`            | `pack.update(slug)` and `pack.updateAll()` |
+| `packwiz url add`           | `pack.addExternal(name, url)`              |
+| `packwiz utils`             | Not supported directly                     |
